@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Downloaded data (do not commit large datasets)
+data/
+
+# Packaging / submission artifacts
+*.zip
+build/
+dist/
+*.egg-info/

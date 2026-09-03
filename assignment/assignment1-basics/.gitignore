@@ -161,3 +161,12 @@ cython_debug/
 
 .ruff_cache/
 *.zip
+
+# macOS
+.DS_Store
+
+# Downloaded data (do not commit large datasets)
+data/
+
+# Pytest junit output from make_submission.sh
+test_results.xml
