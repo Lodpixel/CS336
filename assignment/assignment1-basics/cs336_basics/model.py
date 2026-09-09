@@ -137,3 +137,18 @@ def softmax(
     sum_line = mid_exp.sum(dim=dim, keepdim=True)
     ans = mid_exp / sum_line
     return ans
+
+def scaled_dot_product_attention(
+    # Q: (..., queries, d_k), K: (..., keys d_k), V: (..., keys, d_v)
+    Q: torch.Tensor,
+    K: torch.Tensor,
+    V: torch.Tensor,
+    mask: torch.Tensor
+) -> torch.Tensor:
+    d_k = Q.shape[-1]
+    mid = einsum(Q, K, "... queries d_k, ... keys d_k -> ... queries keys")
+    scores = mid / math.sqrt(d_k)
+    scores = scores.masked_fill(~mask, float("-inf"))
+    scores = softmax(scores, -1)
+    final = einsum(scores, V, "... queries keys, ... keys d_v -> ... queries d_v")
+    return final
