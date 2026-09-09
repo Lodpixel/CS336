@@ -10,8 +10,7 @@ from jaxtyping import Bool, Float, Int
 from torch import Tensor
 from cs336_basics.bpe import train_bpe
 from cs336_basics.tokenizer import Tokenizer
-from cs336_basics.model import Linear, Embedding
-
+from cs336_basics.model import *
 def run_linear(
     d_in: int,
     d_out: int,
@@ -382,7 +381,11 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    raise NotImplementedError
+    rmsnorm_module = RMSnorm(d_model, eps)
+    rmsnorm_module.load_state_dict({"weight": weights})
+    out_rmsnorm = rmsnorm_module.forward(in_features)
+    return out_rmsnorm
+    
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
