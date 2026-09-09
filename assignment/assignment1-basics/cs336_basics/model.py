@@ -125,3 +125,15 @@ class RotaryPositionalEmbedding(torch.nn.Module):
         return ans
 
 RoPE = RotaryPositionalEmbedding
+
+def softmax(
+    x: torch.Tensor,
+    dim: int
+) -> torch.Tensor:
+    # 直接取值
+    maxnum = x.amax(dim=dim, keepdim=True)
+    mid = x - maxnum
+    mid_exp = torch.exp(mid)
+    sum_line = mid_exp.sum(dim=dim, keepdim=True)
+    ans = mid_exp / sum_line
+    return ans
