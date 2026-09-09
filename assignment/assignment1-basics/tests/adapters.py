@@ -209,7 +209,9 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    raise NotImplementedError
+    RoPE_module = RoPE(theta, d_k, max_seq_len)
+    RoPE_module = RoPE_module.to(in_query_or_key.device)
+    return RoPE_module.forward(in_query_or_key, token_positions)
 
 
 def run_transformer_block(
