@@ -152,3 +152,60 @@ def scaled_dot_product_attention(
     scores = softmax(scores, -1)
     final = einsum(scores, V, "... queries keys, ... keys d_v -> ... queries d_v")
     return final
+
+class multihead_self_attention(torch.nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        num_heads: int,
+        max_seq_len: int | None = None,
+        theta: float | None = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
+    ):
+        # 有四个 Linear 模块，W_Q, W_K, W_V, W_O(d_model * d_model)
+        super().__init__()
+        assert d_model % num_heads == 0
+        self.d_model = d_model
+        self.device = device
+        self.h = num_heads
+        self.theta = theta
+        self.max_seq_len = max_seq_len
+        self.q_proj = Linear(d_model, d_model, device, dtype)
+        self.k_proj = Linear(d_model, d_model, device, dtype)
+        self.v_proj = Linear(d_model, d_model, device, dtype)
+        self.o_proj = Linear(d_model, d_model, device, dtype)
+
+    def multihead(
+        self,
+        Q: torch.Tensor,
+        K: torch.Tensor,
+        V: torch.Tensor,
+        token_positions: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        q_arr = rearrange(Q, "... seq (h d) -> ... h seq d", h=self.h)
+        k_arr = rearrange(K, "... seq (h d) -> ... h seq d", h=self.h)
+        v_arr = rearrange(V, "... seq (h d) -> ... h seq d", h=self.h)
+        if token_positions is not None:
+            rope_module = RoPE(self.theta, self.d_model // self.h, self.max_seq_len, self.device)
+            q_arr = rope_module.forward(q_arr, token_positions)
+            k_arr = rope_module.forward(k_arr, token_positions)
+        # 利用广播来简化 mask 的编写
+        casual_mask = torch.tril(torch.ones(q_arr.shape[-2], k_arr.shape[-2], dtype=torch.bool))
+        ans_arr = scaled_dot_product_attention(q_arr, k_arr, v_arr, casual_mask)
+        ans_arr = rearrange(ans_arr, "... h seq d -> ... seq (h d)")
+        return ans_arr
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        token_positions: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        q = self.q_proj.forward(x)
+        k = self.k_proj.forward(x)
+        v = self.v_proj.forward(x)
+        data = self.multihead(q, k, v, token_positions)
+        return self.o_proj.forward(data)
+        
+
+        
