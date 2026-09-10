@@ -174,7 +174,7 @@ class multihead_self_attention(torch.nn.Module):
         self.q_proj = Linear(d_model, d_model, device, dtype)
         self.k_proj = Linear(d_model, d_model, device, dtype)
         self.v_proj = Linear(d_model, d_model, device, dtype)
-        self.o_proj = Linear(d_model, d_model, device, dtype)
+        self.output_proj = Linear(d_model, d_model, device, dtype)
 
     def multihead(
         self,
@@ -205,7 +205,39 @@ class multihead_self_attention(torch.nn.Module):
         k = self.k_proj.forward(x)
         v = self.v_proj.forward(x)
         data = self.multihead(q, k, v, token_positions)
-        return self.o_proj.forward(data)
+        return self.output_proj.forward(data)
+
+class transformer_block(torch.nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        num_heads: int,
+        d_ff: int,
+        theta: float,
+        max_seq_len: int,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
+    ):
+        super().__init__()
+        self.ln1 = RMSnorm(d_model, device=device, dtype=dtype)
+        self.ln2 = RMSnorm(d_model, device=device, dtype=dtype)
+        self.attn = multihead_self_attention(d_model, num_heads, max_seq_len, theta, device, dtype)
+        self.ffn = SwiGLU(d_model, d_ff, device, dtype)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+    ):
+        seq_len = x.shape[-2]
+        token_positions = torch.arange(seq_len, device=x.device)
+        # first layer: y = x + MHA(RMSNorm(x))
+        y = x + self.attn.forward(self.ln1.forward(x), token_positions)
+        # second layer: y = y + FFN(RMSNorm(y))
+        y = y + self.ffn.forward(self.ln2.forward(y))
+        return y
+        
+
+    
         
 
         
