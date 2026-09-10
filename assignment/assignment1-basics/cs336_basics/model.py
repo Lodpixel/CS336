@@ -270,7 +270,6 @@ class transformer_lm(torch.nn.Module):
         x = self.lm_head.forward(x)
         return x
 
-    
         
 
         

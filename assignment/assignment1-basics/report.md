@@ -89,7 +89,11 @@ Spring 2026 自学记录。这里只记录书面题和实验题的完成状态�
 - [ ] (d) 对 GPT-2 small/medium/large 做 FLOPs 比例分析。
 - [ ] (e) 将 context length 增加到 16,384，分析 FLOPs 和比例变化。
 
-**我的回答：**
+**我的回答：**![image-20260910222544409](/Users/lod/Library/Application Support/typora-user-images/image-20260910222544409.png)
+
+(a): 50257 * 1600(embedding) + 48 * 1600 * 1600 * 4(attention) + 48 * 2 * 1600(RMSNorm) + 48 * 3 * 1600 * 4288(SwiGLU) + 1600(ln_final) + 1600 * 50257(lm_head). 显存大小：乘 4 即可
+
+(b):   4 * 48 * 2 * 1024 * 1600 * 1600(attention) + 48 * 3 * 2 * 1024 * 4288 * 1600(ffn) + 48 * 2 * 1024 * 1024 * 1600(QK^T) + 48 * 2 * 1024 * 1024 * 1600(V * scores) + 2 * 1024 * 1600 * 50257(lm_head)
 
 ---
 
