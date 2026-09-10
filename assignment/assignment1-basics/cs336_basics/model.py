@@ -236,6 +236,39 @@ class transformer_block(torch.nn.Module):
         y = y + self.ffn.forward(self.ln2.forward(y))
         return y
         
+class transformer_lm(torch.nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        context_length: int,
+        d_model: int,
+        num_layers: int,
+        num_heads: int,
+        d_ff: int,
+        rope_theta: float,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None
+    ):
+        super().__init__()
+        self.token_embeddings = Embedding(num_embeddings=vocab_size, embedding_dim=d_model)
+        # num_layers 个 transformer layer
+        self.layers = torch.nn.ModuleList([
+            transformer_block(d_model, num_heads, d_ff, rope_theta, context_length, device, dtype)
+            for _ in range(num_layers)
+        ])
+        self.ln_final = RMSnorm(d_model, device=device, dtype=dtype)
+        self.lm_head = Linear(d_model, vocab_size, device, dtype)
+    
+    def forward(
+        self,
+        x: torch.Tensor
+    ):
+        x = self.token_embeddings.forward(x)
+        for block in self.layers:
+            x = block.forward(x)
+        x = self.ln_final.forward(x)
+        x = self.lm_head.forward(x)
+        return x
 
     
         
