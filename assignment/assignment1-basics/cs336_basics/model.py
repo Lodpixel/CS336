@@ -270,6 +270,15 @@ class transformer_lm(torch.nn.Module):
         x = self.lm_head.forward(x)
         return x
 
-        
-
+def cross_entropy(
+    logits: torch.Tensor,
+    target: torch.Tensor
+):
+    maxnum = logits.amax(dim=-1, keepdim=True)
+    mid = logits - maxnum
+    mid_exp = torch.exp(mid)
+    sum_line = mid_exp.sum(dim=-1, keepdim=True)
+    idx = target.unsqueeze(-1)
+    ans = torch.log(sum_line) - mid.gather(dim=1, index=idx)
+    return ans.mean()
         
