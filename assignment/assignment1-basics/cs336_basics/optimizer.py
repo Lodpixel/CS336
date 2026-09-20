@@ -49,3 +49,19 @@ class AdamW(torch.optim.Optimizer):
                 # state 不会被反馈到 self.state[p] 里，需要做更新。
                 if t == 1:
                     self.state[p] = state
+                
+# 用于实现根据轮次改变的学习率，it 指当前的轮次数
+def lr_cosine_schedule(
+    it,
+    max_learning_rate,
+    min_learning_rate,
+    warmup_iters,
+    cosine_cycle_iters
+):
+    if (it < warmup_iters):
+        return max_learning_rate * it / warmup_iters
+    if (it > cosine_cycle_iters):
+        return min_learning_rate
+    ratio = (it - warmup_iters) / (cosine_cycle_iters - warmup_iters)
+    return min_learning_rate + (max_learning_rate - min_learning_rate) / 2 * (1 + math.cos(math.pi * ratio))
+
