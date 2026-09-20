@@ -278,6 +278,7 @@ def cross_entropy(
     mid = logits - maxnum
     mid_exp = torch.exp(mid)
     sum_line = mid_exp.sum(dim=-1, keepdim=True)
+    # 保证这里的形状是 (..., 1) 而非 (..., )，控制最后 ans 的形状
     idx = target.unsqueeze(-1)
     ans = torch.log(sum_line) - mid.gather(dim=1, index=idx)
     return ans.mean()
