@@ -65,3 +65,21 @@ def lr_cosine_schedule(
     ratio = (it - warmup_iters) / (cosine_cycle_iters - warmup_iters)
     return min_learning_rate + (max_learning_rate - min_learning_rate) / 2 * (1 + math.cos(math.pi * ratio))
 
+# 进行 l2 范数计算，如果小于 max 则不动，大于则整体放缩
+def gradient_clipping(
+    parameter,
+    l2_max
+):
+    # eps 为默认值
+    eps = 1e-6
+    sum = 0
+    for p in parameter:
+        if p.grad is not None:
+            p_sqr = p.grad ** 2
+            sum += p_sqr.sum()
+    sum = math.sqrt(sum)
+    if (sum > l2_max):
+        for p in parameter:
+            if p.grad is not None:
+                p.grad *= (l2_max / (sum + eps))
+    return
